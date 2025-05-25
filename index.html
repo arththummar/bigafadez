@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BigAFadez - Modern Barber Experience</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.18.0/dist/tf.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Montserrat:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      overflow-x: hidden;
+      background: #111827;
+      font-family: 'Inter', sans-serif;
+      color: #e5e7eb;
+    }
+    @keyframes float {
+      0% { transform: translateY(0); opacity: 0.7; }
+      100% { transform: translateY(-100vh); opacity: 0; }
+    }
+    @keyframes slideIn {
+      0% { opacity: 0; transform: translateY(20px); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+    .section-slide {
+      animation: slideIn 0.6s ease-out;
+    }
+    .hover-lift {
+      transition: all 0.3s ease;
+    }
+    .hover-lift:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    }
+    .bg-card {
+      background: #1f2937;
+      border: 1px solid #374151;
+    }
+    .pulse-animation {
+      animation: pulse 2s infinite;
+    }
+    .gradient-text {
+      background: linear-gradient(90deg, #3b82f6, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .image-container {
+      position: relative;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+    .image-container img {
+      max-width: 100%;
+      max-height: 80vh;
+      object-fit: contain;
+      border-radius: 0.5rem;
+    }
+    .image-container.no-image {
+      height: 32rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/jsx">
+    const App = () => {
+      const [currentSection, setCurrentSection] = React.useState('home');
+      const [image, setImage] = React.useState(null);
+      const [result, setResult] = React.useState(null);
+      const [isAnalyzing, setIsAnalyzing] = React.useState(false);
+      const [hairDensity, setHairDensity] = React.useState('medium');
+
+      const navigate = (section) => {
+        document.getElementById('main-content').style.opacity = '0';
+        setTimeout(() => {
+          setCurrentSection(section);
+          document.getElementById('main-content').style.opacity = '1';
+        }, 300);
+      };
+
+      const analyzeImage = () => {
+        setIsAnalyzing(true);
+        setTimeout(() => {
+          const hairTypes = ['Straight', 'Wavy', 'Curly', 'Coily'];
+          const faceShapes = ['Oval', 'Round', 'Square', 'Heart', 'Diamond'];
+          // Mock image analysis: Simulate feature extraction with random weights
+          const hairTypeProbs = hairTypes.map(() => Math.random());
+          const faceShapeProbs = faceShapes.map(() => Math.random());
+          const hairTypeIndex = hairTypeProbs.indexOf(Math.max(...hairTypeProbs));
+          const faceShapeIndex = faceShapeProbs.indexOf(Math.max(...faceShapeProbs));
+          const hairType = hairTypes[hairTypeIndex];
+          const faceShape = faceShapes[faceShapeIndex];
+
+          // Rule-based recommendation with weights
+          const rules = [
+            { condition: hairType === 'Curly' && faceShape === 'Round', fade: 'Mid Taper Fade', confidence: 0.9, reason: 'Balances curls and softens round features.' },
+            { condition: hairType === 'Wavy' && faceShape === 'Oval', fade: 'Low Taper Fade', confidence: 0.85, reason: 'Complements wavy texture and oval symmetry.' },
+            { condition: hairType === 'Straight' && faceShape === 'Square', fade: 'High Fade', confidence: 0.88, reason: 'Sharpens angular features with clean lines.' },
+            { condition: hairType === 'Coily' && faceShape === 'Heart', fade: 'Bald Fade', confidence: 0.87, reason: 'Highlights coily texture and balances wider cheekbones.' },
+            { condition: hairType === 'Curly' && faceShape === 'Diamond', fade: 'Temp Fade', confidence: 0.86, reason: 'Accentuates curls and defines cheekbones.' },
+            { condition: hairDensity === 'thin' && (faceShape === 'Oval' || faceShape === 'Heart'), fade: 'Classic Taper', confidence: 0.82, reason: 'Adds volume for thinner hair.' },
+            { condition: hairDensity === 'thick' && (hairType === 'Coily' || hairType === 'Curly'), fade: 'Bald Fade', confidence: 0.89, reason: 'Manages thick hair with a sleek finish.' },
+            { condition: true, fade: 'Classic Taper', confidence: 0.8, reason: 'Versatile style for most hair and face types.' }
+          ];
+
+          const recommendation = rules.find(rule => rule.condition) || rules[rules.length - 1];
+          
+          setResult({
+            hairType,
+            faceShape,
+            hairDensity,
+            recommendation: recommendation.fade,
+            confidence: (recommendation.confidence * 100).toFixed(1),
+            reason: recommendation.reason
+          });
+          setIsAnalyzing(false);
+        }, 1500);
+      };
+
+      const handleImageLoad = (e) => {
+        const img = e.target;
+        const container = img.parentElement;
+        container.style.height = `${img.naturalHeight}px`;
+        container.style.width = `${img.naturalWidth}px`;
+      };
+
+      return (
+        <div className="min-h-screen text-gray-200">
+          <div className="fixed inset-0 -z-10 overflow-hidden">
+            {[...Array(20)].map((_, i) => (
+              <div key={i} className="absolute rounded-full bg-gray-600/20"
+                style={{
+                  width: `${Math.random() * 12 + 5}px`,
+                  height: `${Math.random() * 12 + 5}px`,
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                  animation: `float ${Math.random() * 15 + 10}s linear infinite`,
+                  animationDelay: `${Math.random() * 5}s`
+                }}></div>
+            ))}
+          </div>
+
+          <nav className="fixed top-4 left-1/2 transform -translate-x-1/2 z-50">
+            <div className="flex space-x-1 bg-gray-800/90 rounded-full p-1.5 shadow-lg backdrop-blur-sm">
+              {['home', 'mission', 'services', 'analyzer'].map((item) => (
+                <button
+                  key={item}
+                  onClick={() => navigate(item)}
+                  className={`px-5 py-2 rounded-full text-sm font-medium tracking-wide hover-lift ${
+                    currentSection === item 
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
+                  }`}
+                >
+                  {item === 'home' ? 'Home' : 
+                   item === 'mission' ? 'Mission' : 
+                   item === 'services' ? 'Services' : 'Fade Finder'}
+                </button>
+              ))}
+            </div>
+          </nav>
+
+          <main id="main-content" className="transition-opacity duration-300 opacity-100 min-h-screen">
+            {currentSection === 'home' && (
+              <section className="max-w-6xl mx-auto px-6 py-20 flex flex-col items-center justify-center min-h-screen section-slide">
+                <div className="text-center mb-12">
+                  <h1 className="text-5xl md:text-7xl font-bold mb-4 font-['Montserrat']">
+                    BigA<span className="gradient-text">Fadez</span>
+                  </h1>
+                  <p className="text-lg text-gray-400 max-w-2xl mx-auto font-['Inter'] leading-relaxed">
+                    Clean cuts, modern style, and personalized fades for every vibe. Step into a barbershop where tradition meets innovation.
+                  </p>
+                  <p className="text-sm text-gray-500 mt-2 font-['Inter']">
+                    Trusted by thousands for bold, confident looks since 2023. Open 7 days a week.
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-3 gap-8 w-full">
+                  {[
+                    { 
+                      title: "Expert Cuts", 
+                      desc: "Precision fades by skilled barbers using top-tier tools.", 
+                      icon: "✂️" 
+                    },
+                    { 
+                      title: "AI Styling", 
+                      desc: "Smart tech tailors your fade to your unique features.", 
+                      icon: "🤖" 
+                    },
+                    { 
+                      title: "Premium Vibes", 
+                      desc: "A luxurious experience with music and comfort in mind.", 
+                      icon: "🌟" 
+                    }
+                  ].map((item, i) => (
+                    <div 
+                      key={i}
+                      className="bg-card rounded-xl p-6 hover-lift relative overflow-hidden"
+                    >
+                      <span className="text-4xl absolute top-2 right-2 opacity-10">{item.icon}</span>
+                      <h3 className="text-lg font-semibold mb-2 font-['Montserrat']">{item.title}</h3>
+                      <p className="text-gray-400 font-['Inter'] text-sm">{item.desc}</p>
+                      <a 
+                        href="#services" 
+                        onClick={() => navigate('services')} 
+                        className="text-blue-400 hover:text-blue-300 text-sm font-['Inter'] mt-3 inline-block"
+                      >
+                        Learn More
+                      </a>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-12 flex space-x-4">
+                  <button 
+                    onClick={() => navigate('analyzer')}
+                    className="px-8 py-3 bg-blue-600 text-white rounded-full text-base font-medium hover-lift font-['Montserrat'] pulse-animation"
+                  >
+                    Find Your Fade
+                  </button>
+                  <button 
+                    onClick={() => navigate('mission')}
+                    className="px-8 py-3 border border-gray-500/50 text-gray-300 rounded-full text-base font-medium hover-lift font-['Montserrat']"
+                  >
+                    Our Story
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {currentSection === 'mission' && (
+              <section className="max-w-5xl mx-auto px-6 py-20 min-h-screen flex items-center section-slide">
+                <div className="bg-card rounded-xl p-10 relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-blue-600/10 rounded-full -mr-16 -mt-16"></div>
+                  <h2 className="text-4xl font-bold mb-8 font-['Montserrat'] text-gray-100">
+                    Our Mission
+                  </h2>
+                  <div className="space-y-8">
+                    <p className="text-base text-gray-400 font-['Inter'] leading-relaxed">
+                      At <span className="gradient-text">BigAFadez</span>, we’re redefining barbering by blending timeless craftsmanship with cutting-edge technology. Our goal is to empower every client with a confident, personalized look that reflects their unique style.
+                    </p>
+                    <div className="border-l-4 border-blue-400 pl-4 py-2">
+                      <p className="italic text-gray-300 font-['Inter'] text-lg">
+                        "Style that speaks, cuts that define."
+                      </p>
+                    </div>
+                    <div className="grid md:grid-cols-2 gap-8">
+                      <div className="relative">
+                        <span className="text-5xl absolute -top-2 -left-2 opacity-10">🛠️</span>
+                        <h3 className="text-xl font-semibold mb-3 font-['Montserrat']">Modern Craft</h3>
+                        <p className="text-gray-400 font-['Inter'] text-sm">
+                          Classic techniques meet AI precision for flawless, tailored results.
+                        </p>
+                      </div>
+                      <div className="relative">
+                        <span className="text-5xl absolute -top-2 -left-2 opacity-10">🤝</span>
+                        <h3 className="text-xl font-semibold mb-3 font-['Montserrat']">Your Space</h3>
+                        <p className="text-gray-400 font-['Inter'] text-sm">
+                          A community hub where style and connection thrive daily.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-8">
+                      <h3 className="text-xl font-semibold mb-4 font-['Montserrat']">Why Choose Us?</h3>
+                      <ul className="space-y-3">
+                        {[
+                          "Award-winning barbers with over 50 years of combined experience.",
+                          "Eco-friendly products and sustainable practices.",
+                          "AI tools for personalized style recommendations.",
+                          "Convenient online booking and flexible hours."
+                        ].map((item, i) => (
+                          <li key={i} className="flex items-center text-gray-400 font-['Inter'] text-sm">
+                            <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                            {item}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => navigate('services')}
+                    className="mt-8 px-6 py-2 bg-blue-600 text-white rounded-full text-base font-medium hover-lift font-['Montserrat']"
+                  >
+                    Explore Our Services
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {currentSection === 'services' && (
+              <section className="max-w-6xl mx-auto px-6 py-20 min-h-screen section-slide">
+                <h2 className="text-4xl font-bold mb-12 text-center font-['Montserrat'] text-gray-100">
+                  Our Services
+                </h2>
+                <p className="text-center text-gray-400 font-['Inter'] mb-10 text-base max-w-3xl mx-auto">
+                  From classic cuts to modern fades, our services are crafted with precision and care for your unique style.
+                </p>
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  {[
+                    { 
+                      name: "Signature Fade", 
+                      price: "$45", 
+                      desc: "Clean fade with precision blending and sharp lines for a bold look.", 
+                      time: "45 min",
+                      icon: "✂️"
+                    },
+                    { 
+                      name: "Beard Sculpt", 
+                      price: "$30", 
+                      desc: "Expert beard shaping with premium grooming products.", 
+                      time: "30 min",
+                      icon: "🪒"
+                    },
+                    { 
+                      name: "Executive Cut", 
+                      price: "$60", 
+                      desc: "Full-service cut with shampoo, scalp massage, and consultation.", 
+                      time: "60 min",
+                      icon: "💼"
+                    },
+                    { 
+                      name: "The Works", 
+                      price: "$85", 
+                      desc: "Fade, beard sculpt, hot towel treatment, and luxury care.", 
+                      time: "90 min",
+                      icon: "🌟"
+                    },
+                    { 
+                      name: "Buzz Cut", 
+                      price: "$25", 
+                      desc: "Quick, clean buzz cut for a low-maintenance, sharp style.", 
+                      time: "20 min",
+                      icon: "⚡"
+                    },
+                    { 
+                      name: "Fade & Design", 
+                      price: "$55", 
+                      desc: "Custom fade with intricate hair designs for a unique look.", 
+                      time: "60 min",
+                      icon: "🎨"
+                    }
+                  ].map((service, i) => (
+                    <div 
+                      key={i}
+                      className="bg-card rounded-xl p-6 hover-lift relative overflow-hidden"
+                    >
+                      <span className="text-4xl absolute top-2 right-2 opacity-10">{service.icon}</span>
+                      <div className="flex justify-between items-start mb-3">
+                        <h3 className="text-lg font-semibold font-['Montserrat']">{service.name}</h3>
+                        <span className="bg-blue-600/20 text-blue-300 px-2 py-1 rounded-full text-xs font-['Inter']">
+                          {service.price}
+                        </span>
+                      </div>
+                      <p className="text-gray-400 mb-4 font-['Inter'] text-sm">{service.desc}</p>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="text-gray-400 font-['Inter']">{service.time}</span>
+                        <button className="text-blue-400 hover:text-blue-300 font-['Inter']">
+                          Book Now
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-12 text-center">
+                  <p className="text-gray-400 font-['Inter'] text-sm">
+                    All services include a complimentary beverage, consultation, and aftercare tips.
+                  </p>
+                  <button 
+                    onClick={() => navigate('analyzer')}
+                    className="mt-6 px-8 py-3 bg-blue-600 text-white rounded-full text-base font-medium hover-lift font-['Montserrat']"
+                  >
+                    Find Your Perfect Style
+                  </button>
+                </div>
+              </section>
+            )}
+
+            {currentSection === 'analyzer' && (
+              <section className="max-w-5xl mx-auto px-6 py-20 min-h-screen flex items-center section-slide">
+                <div className="w-full bg-card rounded-xl p-10 relative overflow-hidden">
+                  <div className="absolute bottom-0 right-0 w-48 h-48 bg-blue-600/10 rounded-full -mr-24 -mb-24"></div>
+                  <h2 className="text-4xl font-bold mb-8 font-['Montserrat'] text-gray-100">
+                    Fade Finder
+                  </h2>
+                  <div className="space-y-8">
+                    <p className="text-gray-400 font-['Inter'] text-base leading-relaxed">
+                      Discover your perfect fade with our AI-powered analysis. Upload a photo and select your hair density to get a style tailored to your hair type, face shape, and vibe.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm font-['Inter'] text-gray-400 mb-2">Hair Density</label>
+                        <select
+                          value={hairDensity}
+                          onChange={(e) => setHairDensity(e.target.value)}
+                          className="w-full bg-gray-700/50 text-gray-200 rounded-lg p-2 border border-gray-500/50 focus:border-blue-400 focus:outline-none"
+                        >
+                          <option value="thin">Thin</option>
+                          <option value="medium">Medium</option>
+                          <option value="thick">Thick</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className={`image-container ${!image ? 'no-image' : ''} rounded-lg bg-gray-700/50 border-2 border-dashed border-gray-500/50 hover:border-blue-400/50 transition-all duration-300`}>
+                      {!image ? (
+                        <>
+                          <div className="text-5xl mb-4 text-gray-400 group-hover:text-blue-300 transition-colors">↑</div>
+                          <p className="text-base font-['Inter']">Drop your photo here</p>
+                          <p className="text-sm text-gray-400 font-['Inter']">or click to browse (JPG, PNG)</p>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => e.target.files && e.target.files[0] && setImage(URL.createObjectURL(e.target.files[0]))}
+                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                          />
+                        </>
+                      ) : (
+                        <>
+                          <img 
+                            src={image} 
+                            alt="Preview" 
+                            onLoad={handleImageLoad}
+                            className="w-full h-full object-contain opacity-90 rounded-lg" 
+                          />
+                          <button 
+                            onClick={() => setImage(null)}
+                            className="absolute top-3 right-3 bg-gray-700/80 hover:bg-gray-600 text-white p-2 rounded-full text-sm"
+                          >
+                            ×
+                          </button>
+                        </>
+                      )}
+                    </div>
+                    <button
+                      onClick={analyzeImage}
+                      disabled={!image || isAnalyzing}
+                      className={`w-full py-3 px Grady px-6 rounded-full text-base font-medium hover-lift font-['Montserrat'] ${
+                        !image || isAnalyzing
+                          ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700'
+                      }`}
+                    >
+                      {isAnalyzing ? (
+                        <span className="flex items-center justify-center">
+                          <span className="inline-block w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin mr-3"></span>
+                          Analyzing Your Style...
+                        </span>
+                      ) : (
+                        'Find My Fade'
+                      )}
+                    </button>
+                    {result && (
+                      <div className="mt-8 p-6 bg-card rounded-xl border border-gray-600/50">
+                        <h3 className="text-xl font-semibold mb-6 font-['Montserrat'] flex items-center">
+                          <span className="w-2 h-2 bg-blue-400 rounded-full mr-2"></span>
+                          Your Fade Recommendation
+                        </h3>
+                        <div className="grid md:grid-cols-3 gap-6 mb-6">
+                          <div className="p-4 bg-gray-700/50 rounded-lg">
+                            <p className="text-gray-400 text-sm font-['Inter']">Hair Type</p>
+                            <p className="text-lg font-['Montserrat']">{result.hairType}</p>
+                          </div>
+                          <div className="p-4 bg-gray-700/50 rounded-lg">
+                            <p className="text-gray-400 text-sm font-['Inter']">Face Shape</p>
+                            <p className="text-lg font-['Montserrat']">{result.faceShape}</p>
+                          </div>
+                          <div className="p-4 bg-gray-700/50 rounded-lg">
+                            <p className="text-gray-400 text-sm font-['Inter']">Hair Density</p>
+                            <p className="text-lg font-['Montserrat']">{result.hairDensity.charAt(0).toUpperCase() + result.hairDensity.slice(1)}</p>
+                          </div>
+                        </div>
+                        <div className="p-6 bg-gray-700/50 rounded-lg">
+                          <p className="text-xl font-semibold mb-3 font-['Montserrat'] gradient-text">
+                            {result.recommendation}
+                          </p>
+                          <p className="text-gray-400 font-['Inter'] text-sm">
+                            {result.reason} (Confidence: {result.confidence}%)
+                          </p>
+                        </div>
+                        <div className="mt-6 flex space-x-4">
+                          <button 
+                            onClick={() => navigate('services')}
+                            className="w-full py-2 px-6 border border-gray-500/50 text-gray-300 rounded-full hover:bg-gray-700/50 hover-lift font-['Inter']"
+                          >
+                            Book This Style
+                          </button>
+                          <button 
+                            onClick={() => setImage(null)}
+                            className="w-full py-2 px-6 border border-gray-500/50 text-gray-300 rounded-full hover:bg-gray-700/50 hover-lift font-['Inter']"
+                          >
+                            Try Another Photo
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    <div className="mt-8 text-center">
+                      <p className="text-gray-400 font-['Inter'] text-sm">
+                        Powered by advanced AI and trusted by our expert barbers for precise results.
+                      </p>
+                      <p className="text-gray-500 text-xs mt-2">
+                        Results are based on simulated analysis for demonstration purposes.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+          </main>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
